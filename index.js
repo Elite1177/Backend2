@@ -1,19 +1,21 @@
-const express = require ('express')
-const cors = require ('cors')
+const express = require('express')
+const cors = require('cors')
 const app = express()
-app.use(express.json())
+ 
+app.use(express.json()) //obtener datos que envia el usuario
 app.use(cors())
 app.use(express.static('dist'))
-
-const requestLogger =(request, response,next)=> {
-    console.log('Method',request.method);
-    console.log('Path',request.path);
-    console.log('Body',request.body);
+ 
+const requestLogger = (request, response, next) => {
+    console.log('Method', request.method);
+    console.log('Path', request.path);
+    console.log('Body', request.body);
     console.log('---');
     next()
 }
-
+ 
 app.use (requestLogger)
+ 
 let notes = [
         {
         id: 1,
@@ -56,56 +58,48 @@ let notes = [
         notes=notes.filter(n => n.id !== id)
         response.status(204).end()
     })
-    const generatedId =()=>{
-        const maxId= notes.length>0
-            ? Math.max(...notes.map(n=>n.id))
+ 
+    const generateId = () => {
+        const maxId = notes.length > 0
+            ? Math.max(...notes.map(n => n.id))
             : 0
-        return maxId+1
+        return maxId + 1
     }
-    app.post('/api/notes',(request,response) => {
-        const body=request.body
+ 
+    app.post('/api/notes',(request,response) => { //agrega notas
+        const body = request.body
         if (!body.content){
             return response.status(400).json({
-                error: 'content missing'
+                error: 'Content missing'
             })
         }
-        const note={
-            id:generatedId(),
-            content:body.content,
-            important: Boolean (body.important) || false
+        const note = {
+            id: generateId(),
+            content: body.content,
+            important: Boolean(body.important) || false
         }
-        notes=notes.concat(note)
-        response.json(notes)
+        notes = notes.concat(note)
+        response.json(note)
     })
-    // Ruta PUT para actualizar una nota existente
+ 
     app.put('/api/notes/:id', (request, response) => {
         const id = Number(request.params.id)
         const { content, important } = request.body
-
-        // Buscar la nota con el id proporcionado
+ 
         const noteIndex = notes.findIndex(n => n.id === id)
-
+ 
         if (noteIndex === -1) {
         // Si la nota no existe, respondemos con un error 404
         return response.status(404).json({ error: 'Note not found' })
         }
-
-        // Si la nota existe, actualizamos sus campos
         const updatedNote = {
             id: id,
             content: content || notes[noteIndex].content,  // Si no se proporciona contenido, mantenemos el original
             important: important !== undefined ? important : notes[noteIndex].important // Si no se proporciona, mantenemos el valor original
         }
-        //const body =request.body
-        //const updatedNote=>{...note,important:body.important}
-        //notes=notes.map(n=>n.id!==id?n:updatedNote)
-        // Reemplazar la nota en el arreglo
         notes[noteIndex] = updatedNote
-
-        // Responder con la nota actualizada
         response.json(updatedNote)
     })
-
  
     const PORT = process.env.PORT || 3001
     app.listen(PORT, () => {
