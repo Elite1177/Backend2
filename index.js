@@ -1,10 +1,15 @@
+require ('dotenv').config()
 const express = require('express')
+
 const cors = require('cors')
 const app = express()
+const Note = require('./models/note')
  
 app.use(express.json()) //obtener datos que envia el usuario
 app.use(cors())
 app.use(express.static('dist'))
+
+
  
 const requestLogger = (request, response, next) => {
     console.log('Method', request.method);
@@ -13,6 +18,8 @@ const requestLogger = (request, response, next) => {
     console.log('---');
     next()
 }
+
+
  
 app.use (requestLogger)
  
@@ -38,7 +45,9 @@ let notes = [
         response.send('<h1>API REST FROM NOTES</h1>')
     })
     app.get('/api/notes',(request,response) => {
-        response.json(notes)
+        Note.find({}).then(notes =>{
+            response.json(notes)
+            })
     })
     app.get('/api/notes/:id',(request,response) => {
         const id = Number(request.params.id)
@@ -101,7 +110,7 @@ let notes = [
         response.json(updatedNote)
     })
  
-    const PORT = process.env.PORT || 3001
+    const PORT = process.env.PORT
     app.listen(PORT, () => {
         //console.log(`Server express running on port ${PORT}`);
     })
