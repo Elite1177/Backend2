@@ -50,16 +50,29 @@ let notes = [
             })
     })
     app.get('/api/notes/:id',(request,response) => {
-        const id = Number(request.params.id)
+        Note.findById(request.params.id)
+        .then (note =>{
+            if (note) {
+                response.json(note)
+            }
+            else {
+                response.status(404).edn()
+            }
+        })
+        .catch (error => {
+                console.log(error);
+                response.status(400).send({error:'malformated: id'})
+        })
+        //const id = Number(request.params.id)
         //console.log('id:',id);
-        const note = notes.find(n => n.id === id)
+        //const note = notes.find(n => n.id === id)
         //console.log(note);
-        if(note) {
-            response.json(note)
-        }
-        else {
-            response.status(404).end()
-        }
+        //if(note) {
+        //    response.json(note)
+        //}
+        //else {
+        //    response.status(404).end()
+        //}
     })
     app.delete('/api/notes/:id',(request,response) => {
         const id = Number(request.params.id)
@@ -82,35 +95,51 @@ let notes = [
                 error: 'Content missing'
             })
         }
-        const note = {
-            id: generateId(),
+    //    const note = {
+    //        id: generateId(),
+    //       content: body.content,
+     //       important: Boolean(body.important) || false
+    //    }
+        const note = new Note ({
             content: body.content,
-            important: Boolean(body.important) || false
-        }
-        notes = notes.concat(note)
-        response.json(note)
+            important: body.important || false
+        })
+        note.save().then(result => response.json(note))
+        //notes = notes.concat(note)
+        //response.json(note)
     })
  
-    app.put('/api/notes/:id', (request, response) => {
-        const id = Number(request.params.id)
-        const { content, important } = request.body
- 
-        const noteIndex = notes.findIndex(n => n.id === id)
- 
-        if (noteIndex === -1) {
+    //app.put('/api/notes/:id', (request, response) => {
+        //const id = Number(request.params.id)
+        //const { content, important } = request.body
+        //const noteIndex = notes.findIndex(n => n.id === id)
+        //if (noteIndex === -1) {
         // Si la nota no existe, respondemos con un error 404
-        return response.status(404).json({ error: 'Note not found' })
+        //return response.status(404).json({ error: 'Note not found' })
+        //}
+        //const updatedNote = {
+        //    id: id,
+        //    content: content || notes[noteIndex].content,  // Si no se proporciona contenido, mantenemos el original
+        //    important: important !== undefined ? important : notes[noteIndex].important // Si no se proporciona, mantenemos el valor original
+        //}
+        //notes[noteIndex] = updatedNote
+        //response.json(updatedNote)
+        
+    //})
+    app.put('/api/notes/:id', (request, response) => {
+        const body = request.body
+        const note = {
+            content: body.content,
+            important: body.important
         }
-        const updatedNote = {
-            id: id,
-            content: content || notes[noteIndex].content,  // Si no se proporciona contenido, mantenemos el original
-            important: important !== undefined ? important : notes[noteIndex].important // Si no se proporciona, mantenemos el valor original
-        }
-        notes[noteIndex] = updatedNote
-        response.json(updatedNote)
+        Note.findByIdAndUpdate(request.params.id,note,{new:true})
+            .then(result => {
+                response.json(result)
+            })
+            
     })
  
-    const PORT = process.env.PORT
+    const PORT = process.env.PORT 
     app.listen(PORT, () => {
         //console.log(`Server express running on port ${PORT}`);
     })
